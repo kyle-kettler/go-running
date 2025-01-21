@@ -5,6 +5,7 @@ import (
 	"embed"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	_ "modernc.org/sqlite"
 )
@@ -12,14 +13,42 @@ import (
 //go:embed *.sql
 var schemaFS embed.FS
 
-// TODO: Need to update this to store in a better location for distribution
+// TODO: fix this
+func getDataDir() (string, error) {
+	var dataDir string
+
+	switch goos := runtime.GOOS; goos {
+	case "windows":
+		dataDir = os.Getenv("APPDATA")
+	case "darwin":
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dataDir = filepath.Join(home, "Library", "Application Support")
+	default: // linux and other unix systems
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dataDir = filepath.Join(home, ".local", "share")
+	}
+
+	appDataDir := filepath.Join(dataDir, "gorunning")
+	if err := os.MkdirAll(appDataDir, 0755); err != nil {
+		return "", err
+	}
+
+	return appDataDir, nil
+}
+
 func InitDB() (*sql.DB, error) {
-	homeDir, err := os.UserHomeDir()
+	dataDir, err := getDataDir()
 	if err != nil {
 		return nil, err
 	}
 
-	dbPath := filepath.Join(homeDir, ".gorunning.db")
+	dbPath := filepath.Join(dataDir, "gorunning.db")
 	db, err := sql.Open("sqlite", dbPath)
 
 	schema, err := schemaFS.ReadFile("schema.sql")
