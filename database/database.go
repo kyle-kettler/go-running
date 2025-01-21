@@ -13,7 +13,6 @@ import (
 //go:embed *.sql
 var schemaFS embed.FS
 
-// TODO: fix this
 func getDataDir() (string, error) {
 	var dataDir string
 
