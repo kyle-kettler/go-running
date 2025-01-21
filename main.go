@@ -1,25 +1,41 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/kyle-kettler/go-running/database"
 	"github.com/kyle-kettler/go-running/services"
 )
 
 func main() {
-	err := godotenv.Load()
+	db, err := database.InitDB()
 	if err != nil {
-		log.Fatal("Can not load env")
+		log.Fatal("Error initializing datadase:", err)
+	}
+	defer db.Close()
+
+	savedAddress, err := database.GetLocation(db)
+	if err != nil {
+		log.Fatal("Error getting saved address: ", err)
 	}
 
-	city := os.Getenv("CITY")
-	state := os.Getenv("STATE")
-	country := os.Getenv("COUNTRY")
+	address := flag.String("address", savedAddress, "Address")
 
-	coordinates := services.GetCoordinates(city, state, country)
+	flag.Parse()
+
+	if flag.NFlag() > 0 {
+		if err := database.SaveLocation(db, *address); err != nil {
+			log.Fatal("Error saving location:", err)
+		}
+	}
+
+	if *address == "" {
+		log.Fatal("Please provide an address using the -address flag")
+	}
+
+	coordinates := services.GetCoordinates(*address)
 	weather := services.GetCurrentWeather(coordinates)
 
 	fmt.Println(coordinates.Lat, coordinates.Lon)
