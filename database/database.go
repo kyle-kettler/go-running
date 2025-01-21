@@ -12,6 +12,7 @@ import (
 //go:embed *.sql
 var schemaFS embed.FS
 
+// TODO: Need to update this to store in a better location for distribution
 func InitDB() (*sql.DB, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
