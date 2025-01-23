@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kyle-kettler/go-running/models"
 )
@@ -54,7 +55,7 @@ var defaultWeatherConfig = WeatherAPIConfig{
 		"wind_speed":    "mph",
 		"precipitation": "inch",
 	},
-	ForecastDays: 1,
+	ForecastDays: 2,
 }
 
 func buildWeatherURL(coordinates models.Coordinates, config WeatherAPIConfig, timezone *string, forecast bool) string {
@@ -107,7 +108,6 @@ func GetCurrentWeather(coordinates models.Coordinates) models.Weather {
 
 func GetForecast(coordinates models.Coordinates, timezone string) models.OneDayForecast {
 	baseUrl := buildWeatherURL(coordinates, defaultWeatherConfig, &timezone, true)
-	fmt.Println("baseUrl", baseUrl)
 
 	res, err := http.Get(baseUrl)
 	if err != nil {
@@ -148,5 +148,29 @@ func GetCompassDirection(degrees float64) string {
 		return "NW"
 	default:
 		return "Invalid degree value"
+	}
+}
+
+func BuildForecast(forcast models.Hourly) {
+	currentTime := time.Now()
+	location := currentTime.Location()
+	endTime := currentTime.Add(6 * time.Hour)
+	count := 0
+
+	for i, temp := range forcast.Temperature {
+		forecastTime, err := time.ParseInLocation("2006-01-02T15:04", forcast.Time[i], location)
+		if err != nil {
+			log.Printf("Error parsing time: %v", err)
+			continue
+		}
+
+		if forecastTime.After(currentTime) && forecastTime.Before(endTime) {
+			formattedTime := forecastTime.Format(time.Kitchen)
+			formattedDate := forecastTime.Format("01/02")
+			fmt.Printf("%s %s \r\n", formattedDate, formattedTime)
+			fmt.Printf("Temp: %.1f° | Feels Like: %.1f° |\n", temp, forcast.FeelsLike[i])
+			fmt.Println("=======================================")
+			count++
+		}
 	}
 }

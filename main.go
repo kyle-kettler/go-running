@@ -40,17 +40,15 @@ func main() {
 	weather := services.GetCurrentWeather(coordinates)
 	forcast := services.GetForecast(coordinates, timezone)
 
-	fmt.Println("Timezone: ", timezone)
+	fmt.Println("---------------")
+	fmt.Println("Current Weather")
+	fmt.Println("---------------")
 	fmt.Printf("Current Temp: %.1f°\n", weather.Current.Temp)
 	fmt.Printf("Feels Like: %.1f°\n", weather.Current.FeelsLike)
 	fmt.Printf("Wind Speed: %.2f mph\n", weather.Current.WindSpeed)
 	fmt.Println("Wind Direction:", services.GetCompassDirection(weather.Current.WindDirection))
-	fmt.Println("===============")
+	fmt.Println("----------------")
 	fmt.Println("Hourly Forecast:")
-	for i, temp := range forcast.Hourly.Temperature {
-		if i < 24 { // Show next 24 hours
-			hour := forcast.Hourly.Time[i]
-			fmt.Printf("%s: %.1f°\n", hour, temp)
-		}
-	}
+	fmt.Println("----------------")
+	services.BuildForecast(forcast.Hourly)
 }
